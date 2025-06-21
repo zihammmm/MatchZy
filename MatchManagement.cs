@@ -408,7 +408,8 @@ namespace MatchZy
             }
 
             SetTeamNames();
-        }
+	    SwapPlayersToTeams();
+	}
 
         public void SetTeamNames()
         {
