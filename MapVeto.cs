@@ -362,9 +362,7 @@ namespace MatchZy
                     ChangeMap(nextMap, 3);
                 });
             }
-            SetMapSides();
-	    Log($"SetmapSIdes 111");
-	    isWarmup = true;
+    	    isWarmup = true;
             readyAvailable = true;
             isPreVeto = false;
             isVeto = false;

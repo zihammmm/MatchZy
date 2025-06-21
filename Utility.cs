@@ -738,7 +738,7 @@ namespace MatchZy
                 {
                     if (playerData[key].TeamNum == 3)
                     {
-                        matchzyTeam1.teamName = "team_" + RemoveSpecialCharacters(playerData[key].PlayerName.Replace(" ", "_"));
+                        matchzyTeam1.teamName = "team_" + playerData[key].PlayerName;
                         foreach (var coach in matchzyTeam1.coach) {
                             coach.Clan = $"[{matchzyTeam1.teamName} COACH]";
                         }
@@ -757,7 +757,7 @@ namespace MatchZy
                 {
                     if (playerData[key].TeamNum == 2)
                     {
-                        matchzyTeam2.teamName = "team_" + RemoveSpecialCharacters(playerData[key].PlayerName.Replace(" ", "_"));
+                        matchzyTeam2.teamName = "team_" + playerData[key].PlayerName;
                         foreach (var coach in matchzyTeam2.coach) {
                             coach.Clan = $"[{matchzyTeam2.teamName} COACH]";
                         }
@@ -845,10 +845,8 @@ namespace MatchZy
 
         private void HandleMatchEnd()
         {
-           Log($"!isMatchLive");
-	   	if (!isMatchLive) return;
-	    Log($"isMatchLive == 1");
-	    // This ensures that the mp_match_restart_delay is not shorter than what is required for the GOTV recording to finish.
+    	   	if (!isMatchLive) return;
+    	    // This ensures that the mp_match_restart_delay is not shorter than what is required for the GOTV recording to finish.
             // Ref: Get5
             int restartDelay = ConVar.Find("mp_match_restart_delay")!.GetPrimitiveValue<int>();
             int tvDelay = GetTvDelay();
@@ -856,7 +854,6 @@ namespace MatchZy
             int tvFlushDelay = requiredDelay;
             if (tvDelay > 0.0)
             {
-		Log($"tvDelay > 0.0");
                 requiredDelay += 10;
             }
             if (requiredDelay > restartDelay)
@@ -898,7 +895,6 @@ namespace MatchZy
             // Todo: Support BO3/BO5 in pugs as well
             if (!isMatchSetup)
             {
-		Log($"isMatchSetup");
                 EndSeries(winnerName, restartDelay - 1, t1score, t2score);
                 return;
             }
@@ -907,12 +903,10 @@ namespace MatchZy
             Log($"[HandleMatchEnd] MATCH ENDED, remainingMaps: {remainingMaps}, NumMaps: {matchConfig.NumMaps}, Team1SeriesScore: {matchzyTeam1.seriesScore}, Team2SeriesScore: {matchzyTeam2.seriesScore}");
             if (matchzyTeam1.seriesScore == matchzyTeam2.seriesScore && remainingMaps <= 0)
             {
-		Log($"(matchzyTeam1.seriesScore == matchzyTeam2.seriesScore && remainingMaps <= 0");
                 EndSeries(null, restartDelay - 1, t1score, t2score);
             }
             else if (matchConfig.SeriesCanClinch)
             {
-		Log($"matchConfig.SeriesCanClinch");
                 int mapsToWinSeries = (matchConfig.NumMaps / 2) + 1;
                 if (matchzyTeam1.seriesScore == mapsToWinSeries)
                 {
@@ -922,32 +916,26 @@ namespace MatchZy
                 }
                 else if (matchzyTeam2.seriesScore == mapsToWinSeries)
                 {
-                    Log($"matchzyTeam2.seriesScore == mapsToWinSeries");
-		    EndSeries(winnerName, restartDelay - 1, t1score, t2score);
+        		    EndSeries(winnerName, restartDelay - 1, t1score, t2score);
                     return;
                 }
             }
             else if (remainingMaps <= 0)
-            {
-		Log($"(remainingMaps <= 0");
-                EndSeries(winnerName, restartDelay - 1, t1score, t2score);
+            {EndSeries(winnerName, restartDelay - 1, t1score, t2score);
                 return;
             }
             if (matchzyTeam1.seriesScore > matchzyTeam2.seriesScore)
             {
-                  Log($"matchzyTeam1.seriesScore > matchzyTeam2.seriesScore");
-		    Server.PrintToChatAll($"{chatPrefix} {ChatColors.Green}{matchzyTeam1.teamName}{ChatColors.Default} is winning the series {ChatColors.Green}{matchzyTeam1.seriesScore}-{matchzyTeam2.seriesScore}{ChatColors.Default}");
+		        Server.PrintToChatAll($"{chatPrefix} {ChatColors.Green}{matchzyTeam1.teamName}{ChatColors.Default} is winning the series {ChatColors.Green}{matchzyTeam1.seriesScore}-{matchzyTeam2.seriesScore}{ChatColors.Default}");
 
             }
             else if (matchzyTeam2.seriesScore > matchzyTeam1.seriesScore)
             {
-                Log($"(matchzyTeam2.seriesScore > matchzyTeam1.seriesScore");
-		    Server.PrintToChatAll($"{chatPrefix} {ChatColors.Green}{matchzyTeam2.teamName}{ChatColors.Default} is winning the series {ChatColors.Green}{matchzyTeam2.seriesScore}-{matchzyTeam1.seriesScore}{ChatColors.Default}");
+		        Server.PrintToChatAll($"{chatPrefix} {ChatColors.Green}{matchzyTeam2.teamName}{ChatColors.Default} is winning the series {ChatColors.Green}{matchzyTeam2.seriesScore}-{matchzyTeam1.seriesScore}{ChatColors.Default}");
 
             }
             else
             {
-		    Log($"(matchzyTeam2.seriesScore <= matchzyTeam1.seriesScor");
                 Server.PrintToChatAll($"{chatPrefix} The series is tied at {ChatColors.Green}{matchzyTeam1.seriesScore}-{matchzyTeam2.seriesScore}{ChatColors.Default}");
             }
             matchConfig.CurrentMapNumber += 1;
@@ -955,9 +943,8 @@ namespace MatchZy
 
             if (isPaused)
             {
-		    Log($"isPaused");
-		    UnpauseMatch();
-	    }
+		        UnpauseMatch();
+	        }
             stopData["ct"] = false;
             stopData["t"] = false;
 
@@ -966,10 +953,9 @@ namespace MatchZy
             AddTimer(restartDelay - 4, () =>
             {
                 if (!isMatchSetup){
-	       	    Log($"!isMatchSetup");
-	    	    return;
-		}
-	        ChangeMap(nextMap, 3.0f);
+	    	     return;
+                }
+	            ChangeMap(nextMap, 3.0f);
                 matchStarted = false;
                 readyAvailable = true;
                 isPaused = false;
@@ -999,10 +985,6 @@ namespace MatchZy
                 {
                     Server.ExecuteCommand($"bot_kick");
                     Server.ExecuteCommand($"changelevel \"{mapName}\"");
-                }
-                else
-                {
-                    Log("change map failed");
                 }
             });
         }
@@ -1770,7 +1752,7 @@ namespace MatchZy
 
         private void Log(string message)
         {
-            Console.WriteLine("[MatchZy] " + message);
+            Console.WriteLine("[ZHY] " + message);
         }
 
         private void AutoStart()

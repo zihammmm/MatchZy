@@ -15,6 +15,7 @@ public partial class MatchZy
             if (!IsPlayerValid(player)) return HookResult.Continue;
             Log($"[FULL CONNECT] Player ID: {player!.UserId}, Name: {player.PlayerName} has connected!");
 
+            // 强制选边 player.ChangeTeam(CsTeam.Terrorist);
             // Handling whitelisted players
             if (!player.IsBot || !player.IsHLTV)
             {
