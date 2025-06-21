@@ -22,7 +22,7 @@ namespace MatchZy
 
         public FakeConVar<bool> showCreditsOnMatchStart = new("matchzy_show_credits_on_match_start", "Whether to show 'MatchZy Plugin by WD-' message on match start. Default: true", false);
 
-        public FakeConVar<string> hostnameFormat = new("matchzy_hostname_format", "The server hostname to use. Set to \"\" to disable/use existing. Default: MatchZy | {TEAM1} vs {TEAM2}", "MatchZy | {TEAM1} vs {TEAM2}");
+        public FakeConVar<string> hostnameFormat = new("matchzy_hostname_format", "The server hostname to use. Set to \"\" to disable/use existing. Default: MatchZy | {TEAM1} vs {TEAM2}", "梓山会 | {TEAM1} vs {TEAM2}");
 
         public FakeConVar<bool> enableDamageReport = new("matchzy_enable_damage_report", "Whether to show damage report after each round or not. Default: true", true);
 
