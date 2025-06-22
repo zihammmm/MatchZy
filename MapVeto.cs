@@ -24,7 +24,7 @@ namespace MatchZy
         };
 
         public CsTeam lastVetoTeam = CsTeam.None;
-
+	public Dictionary<string, string>[] mapPlayerTeam = new Dictionary<string, string>[3];
         public void CreateVeto()
         {
             SwapPlayersToTeams();
@@ -347,7 +347,6 @@ namespace MatchZy
             foreach (var key in playerReadyStatus.Keys) {
                 playerReadyStatus[key] = false;
             }
-
             if (IsMapReloadRequiredForGameMode(matchConfig.Wingman) || mapReloadRequired || currentMapName != mapToPlay) {
 
                 SetCorrectGameMode();
@@ -517,6 +516,7 @@ namespace MatchZy
             HandleVetoStep();
         }
 
+
         public void PickSide(CsTeam side, string team) {
             if (side == CsTeam.CounterTerrorist) {
                 matchConfig.MapSides.Add(team == "team1" ? "team1_ct" : "team1_t");
@@ -533,6 +533,63 @@ namespace MatchZy
             Team matchzyTeam = (team == "team1") ? matchzyTeam1 : matchzyTeam2;
 
             Server.PrintToChatAll($"{chatPrefix} {ChatColors.Green}{matchzyTeam.teamName}{ChatColors.Default} 在 {ChatColors.Green}{mapName}{ChatColors.Default} 选择了 {ChatColors.Green}{sideFormatted}{ChatColors.Default}.");
+           
+	    Log($"[PickSIde - DEBUG] mapName:{mapName}");
+	    if ((team == "team1" && sideFormatted == "CT") || (team == "team2" && sideFormatted == "T")) // team1 选择 CT
+            {
+                Log($"[PickSide - DEBUG] befor foreach");
+		 foreach (var key in playerData.Keys)
+                {
+                
+		    CCSPlayerController player = playerData[key];
+                    CsTeam playerteam = (player.TeamNum == 3) ? CsTeam.CounterTerrorist :  CsTeam.Terrorist;
+                    string playerTeamString = (playerteam == CsTeam.CounterTerrorist) ? "CT" : "TERRORIST";
+                    if(mapPlayerTeam[mapNumber] == null) {
+			    mapPlayerTeam[mapNumber] = new Dictionary<string, string>();
+		    }
+	    	    Log($"[PickSide - DEBUG] befor if");
+		    if (reverseTeamSides[playerTeamString] == matchzyTeam1)  //player 属于 team1
+                    {
+                        Log($"[PickSide - DEBUG] befor mapPlayerTeam[mapNumber][player.PlayerName] =");
+		        mapPlayerTeam[mapNumber][player.PlayerName] = "CT";
+                    	Log($"[PickSIde - DEBUG]player in team1 is CT, mapPlayerTeam[mapNumber][player.PlayerName]:{ mapPlayerTeam[mapNumber][player.PlayerName]}");
+		    }
+		    else if(reverseTeamSides[playerTeamString] == matchzyTeam2)
+                    {
+			Log($"[PickSide - DEBUG] befor mapPlayerTeam[mapNumber][player.PlayerName] =");
+                        mapPlayerTeam[mapNumber][player.PlayerName] = "T";
+			Log($"[PickSIde - DEBUG]player in team2 is T, mapPlayerTeam[mapNumber][player.PlayerName]:{ mapPlayerTeam[mapNumber][player.PlayerName]}");
+                    }
+                }
+            }
+            else if ((team == "team1" && sideFormatted == "T") || (team == "team2" && sideFormatted == "CT"))//team1 选择 T
+            {
+		     Log($"[PickSide - DEBUG] befor foreach");
+                     foreach (var key in playerData.Keys) {
+		     CCSPlayerController player = playerData[key];
+                        
+                     CsTeam playerteam = (player.TeamNum == 3) ? CsTeam.CounterTerrorist :  CsTeam.Terrorist;
+			string playerTeamString = (playerteam == CsTeam.CounterTerrorist) ? "CT" : "TERRORIST";
+                        if(mapPlayerTeam[mapNumber] == null) {
+	         	     mapPlayerTeam[mapNumber] = new Dictionary<string, string>();
+		        }
+		    	Log($"[PickSide - DEBUG] playerteam:{playerteam}");
+			Log($"[PickSide - DEBUG] befor if");
+			if (reverseTeamSides[playerTeamString] == matchzyTeam1)//player 属于 team1
+                        {
+			    Log($"[PickSide - DEBUG] befor mapPlayerTeam[mapNumber][player.PlayerName] =");
+                            mapPlayerTeam[mapNumber][player.PlayerName] = "T";
+                            Log($"[PickSIde - DEBUG]player in team1 is T, mapPlayerTeam[mapNumber][player.PlayerName]:{ mapPlayerTeam[mapNumber][player.PlayerName]}");
+		       }
+                       else if(reverseTeamSides[playerTeamString] == matchzyTeam2)
+		       {
+			    Log($"[PickSide - DEBUG] befor mapPlayerTeam[mapNumber][player.PlayerName] =");
+                            mapPlayerTeam[mapNumber][player.PlayerName] = "CT";
+                   	    Log($"[PickSIde - DEBUG]player in team2 is CT, mapPlayerTeam[mapNumber][player.PlayerName]:{ mapPlayerTeam[mapNumber][player.PlayerName]}");
+		    	    Log($"[PickSIde - DEBUG]playerTeamString:{playerTeamString},player.PlayerName:{player.PlayerName}");
+		       }
+		  }
+            }
 
             var sidePickedEvent = new MatchZySidePickedEvent
             {
