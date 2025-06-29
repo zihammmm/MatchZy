@@ -586,33 +586,29 @@ namespace MatchZy
        {
            CsTeam playerTeam = CsTeam.None;
            var steamId = player.SteamID;
+           (int t1score, int t2score) = GetTeamsScore();
            int remainingMaps = matchConfig.NumMaps - matchzyTeam1.seriesScore - matchzyTeam2.seriesScore;
-	        if (true)
-           {
-                Log($"[forceChangeSide - FATAL]:matchConfig.Maplist.Count == 0");
-                Log($"[forceChangeSide - DEBUG]:matchConfig.CurrentMapNumber: { matchConfig.CurrentMapNumber}");
-                Log($"[forceChangeSide - DEBUG]: matchConfig.NumMaps: { matchConfig.NumMaps}");
+           Log($"[forceChangeSide - DEBUG]:remainingMaps:{remainingMaps}");
+           Log($"[forceChangeSide - DEBUG]:matchzyTeam1.seriesScore:{matchzyTeam1.seriesScore}");
+           Log($"[forceChangeSide - DEBUG]:matchzyTeam2.seriesScore:{matchzyTeam2.seriesScore}");
+           Log($"[forceChangeSide - DEBUG]:matchConfig.CurrentMapNumber: { matchConfig.CurrentMapNumber}");
+           Log($"[forceChangeSide - DEBUG]: matchConfig.NumMaps: { matchConfig.NumMaps}");
+           int currentMapNumber = matchConfig.CurrentMapNumber;
+           currentMapNumber %= 2;
+           Log($"[forceChangeSide - DEBUG]:currentMapNumber:{currentMapNumber}");
+           Log($"[forceChangeSide - DEBUG]:mapPlayerTeam[currentMapNumber][player.PlayerName]:{mapPlayerTeam[currentMapNumber][player.PlayerName]}");
+           Log($"[[forceChangeSide - DEBUG]:player.PlayerName:{player.PlayerName}");
+           if (mapPlayerTeam[currentMapNumber][player.PlayerName] == "CT")
+           { 
+               player.ChangeTeam(CsTeam.CounterTerrorist);
            }
-           if(remainingMaps > 0)
-           {
-               Log($"[forceChangeSide - DEBUG]:remainingMaps:{remainingMaps}");
-		
-               int currentMapNumber = 3 - remainingMaps;
-
-               Log($"[forceChangeSide - DEBUG]:mapPlayerTeam[currentMapNumber][player.PlayerName]:{mapPlayerTeam[currentMapNumber][player.PlayerName]}");
-               Log($"[[forceChangeSide - DEBUG]:player.PlayerName:{player.PlayerName}");
-               if (mapPlayerTeam[currentMapNumber][player.PlayerName] == "CT")
-               { 
-                   player.ChangeTeam(CsTeam.CounterTerrorist);
-               }
-               else if (mapPlayerTeam[currentMapNumber][player.PlayerName] == "T")
-               {
-                   player.ChangeTeam(CsTeam.Terrorist);
-               }
-               else
-               {
-                   Log($"[forceChangeSide error]");
-               }
+           else if (mapPlayerTeam[currentMapNumber][player.PlayerName] == "T")
+           { 
+               player.ChangeTeam(CsTeam.Terrorist);
+           }
+           else
+           { 
+               Log($"[forceChangeSide error]");
            }
        }
         public void EndSeries(string? winnerName, int restartDelay, int t1score, int t2score)

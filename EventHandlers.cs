@@ -17,7 +17,7 @@ public partial class MatchZy
 
             // 强制选边 player.ChangeTeam(CsTeam.Terrorist);
             // Handling whitelisted players
-	    forceChangeSide(player);
+            if(isInMatch) forceChangeSide(player);
 	    if (!player.IsBot || !player.IsHLTV)
             {
                 var steamId = player.SteamID;

@@ -893,16 +893,20 @@ namespace MatchZy
             // If a match is not setup, it was supposed to be a pug/scrim with 1 map
             // Hence we reset the match once it is over
             // Todo: Support BO3/BO5 in pugs as well
-            if (!isMatchSetup)
-            {
-                EndSeries(winnerName, restartDelay - 1, t1score, t2score);
-                return;
-            }
+            // if (!isMatchSetup)
+            // {
+            //     Log($"[HandleMatchEnd - DEBUG]:return because !isMatchSetup");
+            //     EndSeries(winnerName, restartDelay - 1, t1score, t2score);
+            //     return;
+            // }
 
             int remainingMaps = matchConfig.NumMaps - matchzyTeam1.seriesScore - matchzyTeam2.seriesScore;
             Log($"[HandleMatchEnd] MATCH ENDED, remainingMaps: {remainingMaps}, NumMaps: {matchConfig.NumMaps}, Team1SeriesScore: {matchzyTeam1.seriesScore}, Team2SeriesScore: {matchzyTeam2.seriesScore}");
+            Log($"[HandleMatchEnd - DEBUG]:remainingMaps:{remainingMaps},matchzyTeam1.seriesScore:{matchzyTeam1.seriesScore},matchzyTeam2.seriesScore:{matchzyTeam2.seriesScore}");
             if (matchzyTeam1.seriesScore == matchzyTeam2.seriesScore && remainingMaps <= 0)
             {
+                Log($"[HandleMatchEnd - DEBUG]:return because matchzyTeam1.seriesScore == matchzyTeam2.seriesScore && remainingMaps <= 0");
+                isInMatch = false;
                 EndSeries(null, restartDelay - 1, t1score, t2score);
             }
             else if (matchConfig.SeriesCanClinch)
@@ -911,17 +915,23 @@ namespace MatchZy
                 if (matchzyTeam1.seriesScore == mapsToWinSeries)
                 {
                     Log($"matchzyTeam1.seriesScore == mapsToWinSeries");
+                    isInMatch = false;
                     EndSeries(winnerName, restartDelay - 1, t1score, t2score);
                     return;
                 }
                 else if (matchzyTeam2.seriesScore == mapsToWinSeries)
                 {
+                    Log($"matchzyTeam2.seriesScore == mapsToWinSeries");
+                    isInMatch = false;
         		    EndSeries(winnerName, restartDelay - 1, t1score, t2score);
                     return;
                 }
             }
             else if (remainingMaps <= 0)
-            {EndSeries(winnerName, restartDelay - 1, t1score, t2score);
+            {
+                Log($"[HandleMatchEnd - DEBUG]:remainingMaps <= 0");
+                isInMatch = false;
+                EndSeries(winnerName, restartDelay - 1, t1score, t2score);
                 return;
             }
             if (matchzyTeam1.seriesScore > matchzyTeam2.seriesScore)
@@ -949,12 +959,13 @@ namespace MatchZy
             stopData["t"] = false;
 
             KillPhaseTimers();
-
+            Log($"[AddTimer - DEBUG]: brefor changeMap");
             AddTimer(restartDelay - 4, () =>
             {
-                if (!isMatchSetup){
-	    	     return;
-                }
+
+           //      if (!isMatchSetup){
+	    	     // return;
+           //      }
 	            ChangeMap(nextMap, 3.0f);
                 matchStarted = false;
                 readyAvailable = true;

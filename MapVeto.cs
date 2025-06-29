@@ -356,6 +356,7 @@ namespace MatchZy
                 // if (displayGotvVeto) {
                 //     delay += GetTvDelay();
                 // }
+                isInMatch = true;
                 AddTimer(delay, () => {
                     string nextMap = matchConfig.Maplist[matchConfig.CurrentMapNumber];
                     ChangeMap(nextMap, 3);
