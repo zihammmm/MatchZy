@@ -377,6 +377,7 @@ namespace MatchZy
 
         private void ResetMatch(bool warmupCfgRequired = true)
         {
+            Log($"[ResetMatch - DEBUG]:ResetMatching");
             try
             {
                 // We stop demo recording if a live match was restarted
@@ -399,7 +400,7 @@ namespace MatchZy
                 isPractice = false;
                 isDryRun = false;
                 isVeto = false;
-                isPreVeto = false;
+                isPreVeto = true;
 
                 lastBackupFileName = "";
                 lastMatchZyBackupFileName = "";

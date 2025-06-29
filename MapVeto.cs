@@ -27,6 +27,7 @@ namespace MatchZy
 	public Dictionary<string, string>[] mapPlayerTeam = new Dictionary<string, string>[3];
         public void CreateVeto()
         {
+            //ChangeMap("de_overpass", 0);
             SwapPlayersToTeams();
             vetoCaptains["team1"] = GetTeamCaptain("team1");
             vetoCaptains["team2"] = GetTeamCaptain("team2");
