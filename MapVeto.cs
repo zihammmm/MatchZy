@@ -348,21 +348,24 @@ namespace MatchZy
             foreach (var key in playerReadyStatus.Keys) {
                 playerReadyStatus[key] = false;
             }
-            if (IsMapReloadRequiredForGameMode(matchConfig.Wingman) || mapReloadRequired || currentMapName != mapToPlay) {
+            Log($"[FinishMap | DEBUG]:IsMapReloadRequiredForGameMode(matchConfig.Wingman):{IsMapReloadRequiredForGameMode(matchConfig.Wingman)}");
+            Log($"[FinishMap | DEBUG]:mapReloadRequired:{mapReloadRequired}");
+            Log($"[FinishMap | DEBUG]:mapToPlay:{mapToPlay}");
+            Log($"[FinishMap | DEBUG]:currentMapName:{currentMapName}");
 
-                SetCorrectGameMode();
-                float delay = 7.0f;
-                mapChangePending = true;
-                // Todo: Implement displayGotvVeto cvar
-                // if (displayGotvVeto) {
-                //     delay += GetTvDelay();
-                // }
-                isInMatch = true;
-                AddTimer(delay, () => {
-                    string nextMap = matchConfig.Maplist[matchConfig.CurrentMapNumber];
-                    ChangeMap(nextMap, 3);
-                });
-            }
+            SetCorrectGameMode();
+            float delay = 7.0f;
+            mapChangePending = true;
+            // Todo: Implement displayGotvVeto cvar
+            // if (displayGotvVeto) {
+            //     delay += GetTvDelay();
+            // }
+            isInMatch = true;
+            AddTimer(delay, () => { 
+                string nextMap = matchConfig.Maplist[matchConfig.CurrentMapNumber]; 
+                ChangeMap(nextMap, 3);
+            });
+            
     	    isWarmup = true;
             readyAvailable = true;
             isPreVeto = false;
