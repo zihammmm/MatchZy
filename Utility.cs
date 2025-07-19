@@ -849,6 +849,7 @@ namespace MatchZy
     	   	if (!isMatchLive) return;
     	    // This ensures that the mp_match_restart_delay is not shorter than what is required for the GOTV recording to finish.
             // Ref: Get5
+            OpenOpposeMico();
             int restartDelay = ConVar.Find("mp_match_restart_delay")!.GetPrimitiveValue<int>();
             int tvDelay = GetTvDelay();
             int requiredDelay = tvDelay + 15;
@@ -1046,11 +1047,22 @@ namespace MatchZy
             return t1score + t2score;
         }
 
+        public void OpenOpposeMico()
+        {
+            Server.ExecuteCommand("sv_full_alltalk 1");
+        }
+
+        public void CloseOpposeMico()
+        {
+            Server.ExecuteCommand("sv_full_alltalk 0");
+        }
+        
         public void HandlePostRoundStartEvent(EventRoundStart @event)
         {
             if (isDryRun) RandomizeSpawns();
             if (!matchStarted) return;
             playerHasTakenDamage = false;
+            CloseOpposeMico();
             HandleCoaches();
             CreateMatchZyRoundDataBackup();
             InitPlayerDamageInfo();
@@ -1122,6 +1134,7 @@ namespace MatchZy
                     if (swapRequired && !isRoundRestoring)
                     {
                         SwapSidesInTeamData(false);
+                        OpenOpposeMico();
                     }
 
                     isRoundRestoring = false;
@@ -1874,6 +1887,7 @@ namespace MatchZy
 
         public async Task UploadFileAsync(string? filePath, string fileUploadURL, string headerKey, string headerValue, long matchId, int mapNumber, int roundNumber)
         {
+            Log($"[UploadFileAsync - DEBUG]:fileUploadURL:{fileUploadURL}");
             if (filePath == null || fileUploadURL == "")
             {
                 Log($"[UploadFileAsync] Not able to upload the file, either filePath or fileUploadURL is not set. filePath: {filePath} fileUploadURL: {fileUploadURL}");

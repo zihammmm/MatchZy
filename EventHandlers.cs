@@ -1,6 +1,7 @@
 
 using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
+using CounterStrikeSharp.API.Modules.Events;
 using CounterStrikeSharp.API.Modules.Utils;
 
 namespace MatchZy;
@@ -18,7 +19,7 @@ public partial class MatchZy
             // 强制选边 player.ChangeTeam(CsTeam.Terrorist);
             // Handling whitelisted players
             if(isInMatch) forceChangeSide(player);
-	    if (!player.IsBot || !player.IsHLTV)
+	        if (!player.IsBot || !player.IsHLTV)
             {
                 var steamId = player.SteamID;
 
@@ -348,6 +349,13 @@ public partial class MatchZy
             PrintToPlayerChat(player!, Localizer["matchzy.pracc.decoy", player!.PlayerName, $"{(DateTime.Now - thrownTime).TotalSeconds:0.00}"]);
             lastGrenadeThrownTime.Remove(@event.Entityid);
         }
+        return HookResult.Continue;
+    }
+
+    public HookResult EventRoundAnnounceWarmupHandler(EventRoundAnnounceWarmup @event, GameEventInfo info)
+    {
+        OpenOpposeMico();
+        Log($"[EventRoundAnnounceWarmupHandler - DEBUG]:OpenOpposeMico");
         return HookResult.Continue;
     }
 }
