@@ -505,7 +505,14 @@ namespace MatchZy
                 {
                     HandleThrowIndexCommand(player, messageCommandArg);
                 }
-
+                if (message.StartsWith(".captain"))
+                {
+                    HandleChangeCaptain(player, messageCommandArg);
+                }
+                if (message.StartsWith(".love"))
+                {
+                    HandlePickPlayer(player, messageCommandArg);
+                }
                 return HookResult.Continue;
             });
 

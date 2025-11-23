@@ -15,7 +15,7 @@ namespace MatchZy
         public bool isBP = false;
         public int warningsPrinted = 0;
         public int vetoCountdownTime = 5; // In Seconds
-
+        
         public bool mapChangePending = false;
         public CounterStrikeSharp.API.Modules.Timers.Timer? vetoStateTimer = null;
         public Dictionary<string, int> vetoCaptains = new(){
@@ -28,9 +28,9 @@ namespace MatchZy
         public void CreateVeto()
         {
             //ChangeMap("de_overpass", 0);
-            SwapPlayersToTeams();
-            vetoCaptains["team1"] = GetTeamCaptain("team1");
-            vetoCaptains["team2"] = GetTeamCaptain("team2");
+            //SwapPlayersToTeams();
+            //vetoCaptains["team1"] = GetTeamCaptain("team1");
+            //vetoCaptains["team2"] = GetTeamCaptain("team2");
             // Todo: Implement pauseOnVeto CVAR
             // if (pauseOnVeto) {
             //     Server.ExecuteCommand("mp_pause_match");
@@ -45,9 +45,10 @@ namespace MatchZy
             isVeto = true;
             readyAvailable = false;
             isWarmup = false;
+            isCaptainPicking = false;
             KillPhaseTimers();
         }
-
+        
         public void VetoCountdown()
         {
             if (!isVeto)
@@ -392,7 +393,8 @@ namespace MatchZy
             foreach (var key in playerData.Keys)
             {
                 if (!playerData[key].IsValid || playerData[key].IsBot) continue;
-                playerData[key].SwitchTeam(GetPlayerTeam(playerData[key]));
+                playerData[key].SwitchTeam(GetPlayerTeam(playerData[key]));//SwitchTeam: 强制切换玩家队伍，玩家将保持存活并保留武器。
+                playerData[key].CommitSuicide(explode:false , force:true);
             }
         }
 

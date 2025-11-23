@@ -12,7 +12,6 @@ public partial class MatchZy
         try
         {
             CCSPlayerController? player = @event.Userid;
-
             if (!IsPlayerValid(player)) return HookResult.Continue;
             Log($"[FULL CONNECT] Player ID: {player!.UserId}, Name: {player.PlayerName} has connected!");
 

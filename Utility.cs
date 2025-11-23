@@ -147,7 +147,7 @@ namespace MatchZy
 
         private void SendUnreadyPlayersMessage()
         {
-            if (!isWarmup || matchStarted) return;
+            if (!isWarmup || matchStarted || isCaptainPicking) return;
             List<string> unreadyPlayers = new();
 
             foreach (var key in playerReadyStatus.Keys)
@@ -781,7 +781,10 @@ namespace MatchZy
 
             if (isPreVeto)
             {
-                CreateVeto();
+                isHaveCaptain = false;
+                isCaptainPicking = true;
+                captainNum = 0;
+                makeCaptain();
             }
             else if (isKnifeRequired)
             {
