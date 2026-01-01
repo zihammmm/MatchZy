@@ -10,11 +10,12 @@ namespace MatchZy
 {
     public partial class MatchZy
     {
-        public bool isPreVeto = false;
+        public bool isPreVeto = true;
         public bool isVeto = false;
+        public bool isBP = false;
         public int warningsPrinted = 0;
         public int vetoCountdownTime = 5; // In Seconds
-
+        
         public bool mapChangePending = false;
         public CounterStrikeSharp.API.Modules.Timers.Timer? vetoStateTimer = null;
         public Dictionary<string, int> vetoCaptains = new(){
@@ -23,12 +24,13 @@ namespace MatchZy
         };
 
         public CsTeam lastVetoTeam = CsTeam.None;
-
+	public Dictionary<string, string>[] mapPlayerTeam = new Dictionary<string, string>[3];
         public void CreateVeto()
         {
-            SwapPlayersToTeams();
-            vetoCaptains["team1"] = GetTeamCaptain("team1");
-            vetoCaptains["team2"] = GetTeamCaptain("team2");
+            //ChangeMap("de_overpass", 0);
+            //SwapPlayersToTeams();
+            //vetoCaptains["team1"] = GetTeamCaptain("team1");
+            //vetoCaptains["team2"] = GetTeamCaptain("team2");
             // Todo: Implement pauseOnVeto CVAR
             // if (pauseOnVeto) {
             //     Server.ExecuteCommand("mp_pause_match");
@@ -43,9 +45,10 @@ namespace MatchZy
             isVeto = true;
             readyAvailable = false;
             isWarmup = false;
+            isCaptainPicking = false;
             KillPhaseTimers();
         }
-
+        
         public void VetoCountdown()
         {
             if (!isVeto)
@@ -67,8 +70,8 @@ namespace MatchZy
                     vetoStateTimer = null;
                     return;
                 }
-                Server.PrintToChatAll($"{chatPrefix} Captain for {ChatColors.Green}{matchzyTeam1.teamName}{ChatColors.Default}: {ChatColors.Green}{playerData[team1Captain].PlayerName}{ChatColors.Default}");
-                Server.PrintToChatAll($"{chatPrefix} Captain for {ChatColors.Green}{matchzyTeam2.teamName}{ChatColors.Default}: {ChatColors.Green}{playerData[team2Captain].PlayerName}{ChatColors.Default}");
+                Server.PrintToChatAll($"{chatPrefix} {ChatColors.Green}{matchzyTeam1.teamName}{ChatColors.Default}队长为: {ChatColors.Green}{playerData[team1Captain].PlayerName}{ChatColors.Default}");
+                Server.PrintToChatAll($"{chatPrefix} {ChatColors.Green}{matchzyTeam2.teamName}{ChatColors.Default}队长为: {ChatColors.Green}{playerData[team2Captain].PlayerName}{ChatColors.Default}");
 
                 HandleVetoStep();
                 vetoStateTimer?.Kill();
@@ -77,12 +80,13 @@ namespace MatchZy
             }
             warningsPrinted++;
             int secondsRemaining = vetoCountdownTime - warningsPrinted + 1;
-            Server.PrintToChatAll($"{chatPrefix} Map selection commencing in {secondsRemaining}");
+            Server.PrintToChatAll($"{chatPrefix} 地图BP将在 {secondsRemaining} 秒后开始");
         }
 
         public void HandleVetoStep()
         {
             // As long as sides are not set for a map, either give side pick or auto-decide sides and recursively call this.
+            Log("handle veto step");
             if (matchConfig.MapSides.Count < matchConfig.Maplist.Count)
             {
                 if (matchConfig.MatchSideType == "standard")
@@ -127,24 +131,24 @@ namespace MatchZy
             switch (option) 
             {
                 case "team1_ban":
-                    action = $"{ChatColors.Green}{matchzyTeam1.teamName}{ChatColors.Default} must now {ChatColors.Red}BAN{ChatColors.Default} a map.";
+                    action = $"{ChatColors.Green}{matchzyTeam1.teamName}{ChatColors.Default} 必须 {ChatColors.Red}去掉{ChatColors.Default} 一张地图.";
                     client = vetoCaptains["team1"];
-                    stepMessage = $"Use .ban <map> to ban a map";
+                    stepMessage = $"输入 .ban <map> 来去掉一张地图.";
                     break;
                 case "team2_ban":
-                    action = $"{ChatColors.Green}{matchzyTeam2.teamName}{ChatColors.Default} must now {ChatColors.Red}BAN{ChatColors.Default} a map.";
+                    action = $"{ChatColors.Green}{matchzyTeam2.teamName}{ChatColors.Default} 必须 {ChatColors.Red}去掉{ChatColors.Default} 一张地图.";
                     client = vetoCaptains["team2"];
-                    stepMessage = $"Use .ban <map> to ban a map";
+                    stepMessage = $"输入 .ban <map> 来去掉一张地图.";
                     break;                                                       
                 case "team1_pick":
-                    action = $"{ChatColors.Green}{matchzyTeam1.teamName}{ChatColors.Default} must now {ChatColors.Green}PICK{ChatColors.Default} a map to play as map {matchConfig.Maplist.Count + 1}.";
+                    action = $"{ChatColors.Green}{matchzyTeam1.teamName}{ChatColors.Default} 必须 {ChatColors.Green}选择{ChatColors.Default} 一张地图作为图 {matchConfig.Maplist.Count + 1}.";
                     client = vetoCaptains["team1"];
-                    stepMessage = $"Use .pick <map> to pick a map.";
+                    stepMessage = $"输入 .pick <map> 来选择一张地图.";
                     break;
                 case "team2_pick":
-                    action = $"{ChatColors.Green}{matchzyTeam2.teamName}{ChatColors.Default} must now {ChatColors.Green}PICK{ChatColors.Default} a map to play as map {matchConfig.Maplist.Count + 1}.";
+                    action = $"{ChatColors.Green}{matchzyTeam2.teamName}{ChatColors.Default} 必须 {ChatColors.Green}选择{ChatColors.Default} 一张地图作为图 {matchConfig.Maplist.Count + 1}.";
                     client = vetoCaptains["team2"];
-                    stepMessage = $"Use .pick <map> to pick a map.";
+                    stepMessage = $"输入 .pick <map> 来选择一张地图.";
                     break;
             }
             if (!playerData.ContainsKey(client) || !playerData[client].IsValid)
@@ -155,7 +159,7 @@ namespace MatchZy
             Server.PrintToChatAll($"{chatPrefix} {action}");
 
             string mapListAsString = string.Join(", ", matchConfig.MapsLeftInVetoPool);
-            Server.PrintToChatAll($"{chatPrefix} Remaining Maps: {mapListAsString}");
+            Server.PrintToChatAll($"{chatPrefix} 剩余的地图有: {mapListAsString}");
 
             playerData[client].PrintToChat($"{chatPrefix} {stepMessage}");
         }
@@ -245,7 +249,7 @@ namespace MatchZy
 
             if (team != 0) {
                 matchzyTeam = (team == 2) ? reverseTeamSides["TERRORIST"] : reverseTeamSides["CT"];
-                Server.PrintToChatAll($"{chatPrefix} {ChatColors.Green}{matchzyTeam.teamName}{ChatColors.Default} picked {ChatColors.Green}{mapRemovedName}{ChatColors.Default} as map {matchConfig.Maplist.Count + 1}");
+                Server.PrintToChatAll($"{chatPrefix} {ChatColors.Green}{matchzyTeam.teamName}{ChatColors.Default} 选择 {ChatColors.Green}{mapRemovedName}{ChatColors.Default} 作为图 {matchConfig.Maplist.Count + 1}");
             }
 
             matchConfig.Maplist.Add(mapRemovedName);
@@ -277,7 +281,7 @@ namespace MatchZy
 
             if (team != 0) {
                 matchzyTeam = (team == 2) ? reverseTeamSides["TERRORIST"] : reverseTeamSides["CT"];
-                Server.PrintToChatAll($"{chatPrefix} {ChatColors.Green}{matchzyTeam.teamName}{ChatColors.Default} banned {ChatColors.LightRed}{mapRemovedName}{ChatColors.Default}");
+                Server.PrintToChatAll($"{chatPrefix} {ChatColors.Green}{matchzyTeam.teamName}{ChatColors.Default} 去掉了 {ChatColors.LightRed}{mapRemovedName}{ChatColors.Default}");
             }
 
             var mapMapVetoedEvent = new MatchZyMapVetoedEvent
@@ -299,8 +303,8 @@ namespace MatchZy
         public void AbortVeto()
         {
             // Todo: Add AbortVeto() when captain is disconnecting in-between veto
-            Server.PrintToChatAll($"{chatPrefix} A team captain left during map selection. Map selection is paused.");
-            Server.PrintToChatAll($"{chatPrefix} Type .ready when you are ready to resume map selection.");
+            Server.PrintToChatAll($"{chatPrefix} 在选图期间队长离开. 选图暂停.");
+            Server.PrintToChatAll($"{chatPrefix} 当你准备好选图时，输入.ready");
             isPreVeto = true;
             isVeto = false;
             if (isPaused)
@@ -321,7 +325,7 @@ namespace MatchZy
 
         public void FinishVeto() 
         {
-            Server.PrintToChatAll($"{chatPrefix} The maps have been decided:");
+            Server.PrintToChatAll($"{chatPrefix} 选择了以下地图:");
             matchConfig.MapsLeftInVetoPool.Clear();
 
             if (isPaused) {
@@ -345,22 +349,25 @@ namespace MatchZy
             foreach (var key in playerReadyStatus.Keys) {
                 playerReadyStatus[key] = false;
             }
+            Log($"[FinishMap | DEBUG]:IsMapReloadRequiredForGameMode(matchConfig.Wingman):{IsMapReloadRequiredForGameMode(matchConfig.Wingman)}");
+            Log($"[FinishMap | DEBUG]:mapReloadRequired:{mapReloadRequired}");
+            Log($"[FinishMap | DEBUG]:mapToPlay:{mapToPlay}");
+            Log($"[FinishMap | DEBUG]:currentMapName:{currentMapName}");
 
-            if (IsMapReloadRequiredForGameMode(matchConfig.Wingman) || mapReloadRequired || currentMapName != mapToPlay) {
-
-                SetCorrectGameMode();
-                float delay = 7.0f;
-                mapChangePending = true;
-                // Todo: Implement displayGotvVeto cvar
-                // if (displayGotvVeto) {
-                //     delay += GetTvDelay();
-                // }
-                AddTimer(delay, () => {
-                    string nextMap = matchConfig.Maplist[matchConfig.CurrentMapNumber];
-                    ChangeMap(nextMap, 3);
-                });
-            }
-            isWarmup = true;
+            SetCorrectGameMode();
+            float delay = 7.0f;
+            mapChangePending = true;
+            // Todo: Implement displayGotvVeto cvar
+            // if (displayGotvVeto) {
+            //     delay += GetTvDelay();
+            // }
+            isInMatch = true;
+            AddTimer(delay, () => { 
+                string nextMap = matchConfig.Maplist[matchConfig.CurrentMapNumber]; 
+                ChangeMap(nextMap, 3);
+            });
+            
+    	    isWarmup = true;
             readyAvailable = true;
             isPreVeto = false;
             isVeto = false;
@@ -386,7 +393,8 @@ namespace MatchZy
             foreach (var key in playerData.Keys)
             {
                 if (!playerData[key].IsValid || playerData[key].IsBot) continue;
-                playerData[key].SwitchTeam(GetPlayerTeam(playerData[key]));
+                playerData[key].SwitchTeam(GetPlayerTeam(playerData[key]));//SwitchTeam: 强制切换玩家队伍，玩家将保持存活并保留武器。
+                playerData[key].CommitSuicide(explode:false , force:true);
             }
         }
 
@@ -457,12 +465,12 @@ namespace MatchZy
             Team matchzyTeam = (team == CsTeam.CounterTerrorist) ? reverseTeamSides["CT"] : reverseTeamSides["TERRORIST"];
             string teamString = (matchzyTeam == matchzyTeam1) ? "team1" : "team2";
             
-            Server.PrintToChatAll($"{chatPrefix} {ChatColors.Green}{matchzyTeam.teamName}{ChatColors.Default} must now pick a side to play on {ChatColors.Green}{mapName}{ChatColors.Default}");
+            Server.PrintToChatAll($"{chatPrefix} {ChatColors.Green}{matchzyTeam.teamName}{ChatColors.Default} 必须选择阵营在 {ChatColors.Green}{mapName}{ChatColors.Default}");
 
             int client = vetoCaptains[teamString];
             if (!playerData.ContainsKey(client) || !playerData[client].IsValid) return;
 
-            playerData[client].PrintToChat($"{chatPrefix} Use .ct or .t to pick a side");
+            playerData[client].PrintToChat($"{chatPrefix} 输入 .ct 或者 .t 来选阵营");
         }
 
         public bool ValidateMapBanLogic() 
@@ -497,6 +505,7 @@ namespace MatchZy
         public void HandleSideChoice(CsTeam side, int client) {
             if (!SidePickPending()) {
                 // No side selection is done by players in this case.
+                Log("No side selection is done by players in this case.");
                 return;
             }
             Team team = matchzyTeam1;
@@ -514,6 +523,7 @@ namespace MatchZy
             HandleVetoStep();
         }
 
+
         public void PickSide(CsTeam side, string team) {
             if (side == CsTeam.CounterTerrorist) {
                 matchConfig.MapSides.Add(team == "team1" ? "team1_ct" : "team1_t");
@@ -529,7 +539,62 @@ namespace MatchZy
 
             Team matchzyTeam = (team == "team1") ? matchzyTeam1 : matchzyTeam2;
 
-            Server.PrintToChatAll($"{chatPrefix} {ChatColors.Green}{matchzyTeam.teamName}{ChatColors.Default} elected to start as {ChatColors.Green}{sideFormatted}{ChatColors.Default} on {ChatColors.Green}{mapName}{ChatColors.Default}.");
+            Server.PrintToChatAll($"{chatPrefix} {ChatColors.Green}{matchzyTeam.teamName}{ChatColors.Default} 在 {ChatColors.Green}{mapName}{ChatColors.Default} 选择了 {ChatColors.Green}{sideFormatted}{ChatColors.Default}.");
+           
+            Log($"[PickSIde - DEBUG] mapName:{mapName}");
+	        if ((team == "team1" && sideFormatted == "CT") || (team == "team2" && sideFormatted == "T")) // team1 选择 CT
+            {
+                Log($"[PickSide - DEBUG] befor foreach");
+		        foreach (var key in playerData.Keys)
+                {
+		            CCSPlayerController player = playerData[key];
+                    CsTeam playerteam = (player.TeamNum == 3) ? CsTeam.CounterTerrorist :  CsTeam.Terrorist;
+                    string playerTeamString = (playerteam == CsTeam.CounterTerrorist) ? "CT" : "TERRORIST";
+                    if(mapPlayerTeam[mapNumber] == null) {
+			            mapPlayerTeam[mapNumber] = new Dictionary<string, string>();
+		            }
+	    	        Log($"[PickSide - DEBUG] befor if");
+		            if (reverseTeamSides[playerTeamString] == matchzyTeam1)  //player 属于 team1
+                    {
+                        Log($"[PickSide - DEBUG] befor mapPlayerTeam[mapNumber][player.PlayerName] =");
+		                mapPlayerTeam[mapNumber][player.PlayerName] = "CT";
+                    	Log($"[PickSIde - DEBUG]player in team1 is CT, mapPlayerTeam[mapNumber][player.PlayerName]:{ mapPlayerTeam[mapNumber][player.PlayerName]}");
+		            }
+		            else if(reverseTeamSides[playerTeamString] == matchzyTeam2)
+                    {
+			            Log($"[PickSide - DEBUG] befor mapPlayerTeam[mapNumber][player.PlayerName] =");
+                        mapPlayerTeam[mapNumber][player.PlayerName] = "T";
+			            Log($"[PickSIde - DEBUG]player in team2 is T, mapPlayerTeam[mapNumber][player.PlayerName]:{ mapPlayerTeam[mapNumber][player.PlayerName]}");
+                    }
+                }
+            }
+            else if ((team == "team1" && sideFormatted == "T") || (team == "team2" && sideFormatted == "CT"))//team1 选择 T
+            {
+                Log($"[PickSide - DEBUG] befor foreach");
+                foreach (var key in playerData.Keys) {
+                    CCSPlayerController player = playerData[key];
+                    CsTeam playerteam = (player.TeamNum == 3) ? CsTeam.CounterTerrorist :  CsTeam.Terrorist;
+                    string playerTeamString = (playerteam == CsTeam.CounterTerrorist) ? "CT" : "TERRORIST";
+                    if(mapPlayerTeam[mapNumber] == null) {
+                        mapPlayerTeam[mapNumber] = new Dictionary<string, string>();
+                    }
+                    Log($"[PickSide - DEBUG] playerteam:{playerteam}");
+                    Log($"[PickSide - DEBUG] befor if");
+                    if (reverseTeamSides[playerTeamString] == matchzyTeam1)//player 属于 team1
+                    {
+                        Log($"[PickSide - DEBUG] befor mapPlayerTeam[mapNumber][player.PlayerName] =");
+                        mapPlayerTeam[mapNumber][player.PlayerName] = "T";
+                        Log($"[PickSIde - DEBUG]player in team1 is T, mapPlayerTeam[mapNumber][player.PlayerName]:{ mapPlayerTeam[mapNumber][player.PlayerName]}");
+                    }
+                    else if(reverseTeamSides[playerTeamString] == matchzyTeam2)
+                    {
+                        Log($"[PickSide - DEBUG] befor mapPlayerTeam[mapNumber][player.PlayerName] =");
+                        mapPlayerTeam[mapNumber][player.PlayerName] = "CT";
+                        Log($"[PickSIde - DEBUG]player in team2 is CT, mapPlayerTeam[mapNumber][player.PlayerName]:{ mapPlayerTeam[mapNumber][player.PlayerName]}");
+                        Log($"[PickSIde - DEBUG]playerTeamString:{playerTeamString},player.PlayerName:{player.PlayerName}");
+                    }
+                }
+            }
 
             var sidePickedEvent = new MatchZySidePickedEvent
             {

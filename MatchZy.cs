@@ -14,7 +14,7 @@ namespace MatchZy
     {
 
         public override string ModuleName => "MatchZy";
-        public override string ModuleVersion => "0.8.10";
+        public override string ModuleVersion => "0.8.11";
 
         public override string ModuleAuthor => "WD- (https://github.com/shobhit-pathak/)";
 
@@ -34,7 +34,7 @@ namespace MatchZy
         public bool isMatchLive = false;
         public long liveMatchId = -1;
         public int autoStartMode = 1;
-
+        public bool isInMatch = false;
         public bool mapReloadRequired = false;
 
         // Pause Data
@@ -202,7 +202,7 @@ namespace MatchZy
                 { ".besttspawn", OnBestTSpawnCommand },
                 { ".worsttspawn", OnWorstTSpawnCommand }
             };
-
+            RegisterEventHandler<EventRoundAnnounceWarmup>(EventRoundAnnounceWarmupHandler);
             RegisterEventHandler<EventPlayerConnectFull>(EventPlayerConnectFullHandler);
             RegisterEventHandler<EventPlayerDisconnect>(EventPlayerDisconnectHandler);
             RegisterEventHandler<EventCsWinPanelRound>(EventCsWinPanelRoundHandler, hookMode: HookMode.Pre);
@@ -505,7 +505,14 @@ namespace MatchZy
                 {
                     HandleThrowIndexCommand(player, messageCommandArg);
                 }
-
+                if (message.StartsWith(".captain"))
+                {
+                    HandleChangeCaptain(player, messageCommandArg);
+                }
+                if (message.StartsWith(".love"))
+                {
+                    HandlePickPlayer(player, messageCommandArg);
+                }
                 return HookResult.Continue;
             });
 

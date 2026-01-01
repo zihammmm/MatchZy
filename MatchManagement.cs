@@ -408,7 +408,7 @@ namespace MatchZy
             }
 
             SetTeamNames();
-        }
+	    }
 
         public void SetTeamNames()
         {
@@ -538,16 +538,20 @@ namespace MatchZy
         {
             CsTeam playerTeam = CsTeam.None;
             var steamId = player.SteamID;
-            try
+            
+            Log($"[GetPlayerTeam] - DEBUG]: before try");
+	        try
             {
                 if (matchzyTeam1.teamPlayers != null && matchzyTeam1.teamPlayers[steamId.ToString()] != null)
                 {
                     if (teamSides[matchzyTeam1] == "CT")
                     {
-                        playerTeam = CsTeam.CounterTerrorist;
+                    	Log($"[GetPlayerTeam] - DEBUG]: team1 , CT");
+		                playerTeam = CsTeam.CounterTerrorist;
                     }
                     else if (teamSides[matchzyTeam1] == "TERRORIST")
                     {
+			            Log($"[GetPlayerTeam] - DEBUG]: team1 , T");
                         playerTeam = CsTeam.Terrorist;
                     }
 
@@ -556,16 +560,19 @@ namespace MatchZy
                 {
                     if (teamSides[matchzyTeam2] == "CT")
                     {
+			            Log($"[GetPlayerTeam] - DEBUG]: team2 , CT");
                         playerTeam = CsTeam.CounterTerrorist;
                     }
                     else if (teamSides[matchzyTeam2] == "TERRORIST")
                     {
+			            Log($"[GetPlayerTeam] - DEBUG]: team2 , T");
                         playerTeam = CsTeam.Terrorist;
                     }
                 }
                 else if (matchConfig.Spectators != null && matchConfig.Spectators[steamId.ToString()] != null)
                 {
-                    playerTeam = CsTeam.Spectator;
+                    Log($"[GetPlayerTeam] - DEBUG]: SPectators");
+		            playerTeam = CsTeam.Spectator;
                 }
             }
             catch (Exception ex)
@@ -575,6 +582,35 @@ namespace MatchZy
             return playerTeam;
         }
 
+       public void forceChangeSide(CCSPlayerController player)
+       {
+           CsTeam playerTeam = CsTeam.None;
+           var steamId = player.SteamID;
+           (int t1score, int t2score) = GetTeamsScore();
+           int remainingMaps = matchConfig.NumMaps - matchzyTeam1.seriesScore - matchzyTeam2.seriesScore;
+           Log($"[forceChangeSide - DEBUG]:remainingMaps:{remainingMaps}");
+           Log($"[forceChangeSide - DEBUG]:matchzyTeam1.seriesScore:{matchzyTeam1.seriesScore}");
+           Log($"[forceChangeSide - DEBUG]:matchzyTeam2.seriesScore:{matchzyTeam2.seriesScore}");
+           Log($"[forceChangeSide - DEBUG]:matchConfig.CurrentMapNumber: { matchConfig.CurrentMapNumber}");
+           Log($"[forceChangeSide - DEBUG]: matchConfig.NumMaps: { matchConfig.NumMaps}");
+           int currentMapNumber = matchConfig.CurrentMapNumber;
+           currentMapNumber %= 2;
+           Log($"[forceChangeSide - DEBUG]:currentMapNumber:{currentMapNumber}");
+           Log($"[forceChangeSide - DEBUG]:mapPlayerTeam[currentMapNumber][player.PlayerName]:{mapPlayerTeam[currentMapNumber][player.PlayerName]}");
+           Log($"[[forceChangeSide - DEBUG]:player.PlayerName:{player.PlayerName}");
+           if (mapPlayerTeam[currentMapNumber][player.PlayerName] == "CT")
+           { 
+               player.ChangeTeam(CsTeam.CounterTerrorist);
+           }
+           else if (mapPlayerTeam[currentMapNumber][player.PlayerName] == "T")
+           { 
+               player.ChangeTeam(CsTeam.Terrorist);
+           }
+           else
+           { 
+               Log($"[forceChangeSide error]");
+           }
+       }
         public void EndSeries(string? winnerName, int restartDelay, int t1score, int t2score)
         {
             long matchId = liveMatchId;

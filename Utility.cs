@@ -27,6 +27,11 @@ namespace MatchZy
             Server.PrintToChatAll($"{chatPrefix} {message}");
         }
 
+        public void PrintToAllChatWithTag(string message)
+        {
+            Server.PrintToChatAll($"{chatPrefix} {message}");
+        }
+
         private void PrintToPlayerChat(CCSPlayerController player, string message)
         {
             player.PrintToChat($"{chatPrefix} {message}");
@@ -142,7 +147,7 @@ namespace MatchZy
 
         private void SendUnreadyPlayersMessage()
         {
-            if (!isWarmup || matchStarted) return;
+            if (!isWarmup || matchStarted || isCaptainPicking) return;
             List<string> unreadyPlayers = new();
 
             foreach (var key in playerReadyStatus.Keys)
@@ -372,6 +377,7 @@ namespace MatchZy
 
         private void ResetMatch(bool warmupCfgRequired = true)
         {
+            Log($"[ResetMatch - DEBUG]:ResetMatching");
             try
             {
                 // We stop demo recording if a live match was restarted
@@ -394,7 +400,7 @@ namespace MatchZy
                 isPractice = false;
                 isDryRun = false;
                 isVeto = false;
-                isPreVeto = false;
+                isPreVeto = true;
 
                 lastBackupFileName = "";
                 lastMatchZyBackupFileName = "";
@@ -645,7 +651,7 @@ namespace MatchZy
             }
             else
             {
-                ReplyToUserCommand(player, $"Invalid map name!");
+                ReplyToUserCommand(player, Localizer["matchzy.cc.invalidmap"]);
             }
         }
 
@@ -733,7 +739,7 @@ namespace MatchZy
                 {
                     if (playerData[key].TeamNum == 3)
                     {
-                        matchzyTeam1.teamName = "team_" + RemoveSpecialCharacters(playerData[key].PlayerName.Replace(" ", "_"));
+                        matchzyTeam1.teamName = "team_" + playerData[key].PlayerName;
                         foreach (var coach in matchzyTeam1.coach) {
                             coach.Clan = $"[{matchzyTeam1.teamName} COACH]";
                         }
@@ -752,7 +758,7 @@ namespace MatchZy
                 {
                     if (playerData[key].TeamNum == 2)
                     {
-                        matchzyTeam2.teamName = "team_" + RemoveSpecialCharacters(playerData[key].PlayerName.Replace(" ", "_"));
+                        matchzyTeam2.teamName = "team_" + playerData[key].PlayerName;
                         foreach (var coach in matchzyTeam2.coach) {
                             coach.Clan = $"[{matchzyTeam2.teamName} COACH]";
                         }
@@ -775,7 +781,10 @@ namespace MatchZy
 
             if (isPreVeto)
             {
-                CreateVeto();
+                isHaveCaptain = false;
+                isCaptainPicking = true;
+                captainNum = 0;
+                makeCaptain();
             }
             else if (isKnifeRequired)
             {
@@ -840,10 +849,10 @@ namespace MatchZy
 
         private void HandleMatchEnd()
         {
-            if (!isMatchLive) return;
-
-            // This ensures that the mp_match_restart_delay is not shorter than what is required for the GOTV recording to finish.
+    	   	if (!isMatchLive) return;
+    	    // This ensures that the mp_match_restart_delay is not shorter than what is required for the GOTV recording to finish.
             // Ref: Get5
+            OpenOpposeMico();
             int restartDelay = ConVar.Find("mp_match_restart_delay")!.GetPrimitiveValue<int>();
             int tvDelay = GetTvDelay();
             int requiredDelay = tvDelay + 15;
@@ -889,16 +898,20 @@ namespace MatchZy
             // If a match is not setup, it was supposed to be a pug/scrim with 1 map
             // Hence we reset the match once it is over
             // Todo: Support BO3/BO5 in pugs as well
-            if (!isMatchSetup)
-            {
-                EndSeries(winnerName, restartDelay - 1, t1score, t2score);
-                return;
-            }
+            // if (!isMatchSetup)
+            // {
+            //     Log($"[HandleMatchEnd - DEBUG]:return because !isMatchSetup");
+            //     EndSeries(winnerName, restartDelay - 1, t1score, t2score);
+            //     return;
+            // }
 
             int remainingMaps = matchConfig.NumMaps - matchzyTeam1.seriesScore - matchzyTeam2.seriesScore;
             Log($"[HandleMatchEnd] MATCH ENDED, remainingMaps: {remainingMaps}, NumMaps: {matchConfig.NumMaps}, Team1SeriesScore: {matchzyTeam1.seriesScore}, Team2SeriesScore: {matchzyTeam2.seriesScore}");
+            Log($"[HandleMatchEnd - DEBUG]:remainingMaps:{remainingMaps},matchzyTeam1.seriesScore:{matchzyTeam1.seriesScore},matchzyTeam2.seriesScore:{matchzyTeam2.seriesScore}");
             if (matchzyTeam1.seriesScore == matchzyTeam2.seriesScore && remainingMaps <= 0)
             {
+                Log($"[HandleMatchEnd - DEBUG]:return because matchzyTeam1.seriesScore == matchzyTeam2.seriesScore && remainingMaps <= 0");
+                isInMatch = false;
                 EndSeries(null, restartDelay - 1, t1score, t2score);
             }
             else if (matchConfig.SeriesCanClinch)
@@ -906,28 +919,34 @@ namespace MatchZy
                 int mapsToWinSeries = (matchConfig.NumMaps / 2) + 1;
                 if (matchzyTeam1.seriesScore == mapsToWinSeries)
                 {
+                    Log($"matchzyTeam1.seriesScore == mapsToWinSeries");
+                    isInMatch = false;
                     EndSeries(winnerName, restartDelay - 1, t1score, t2score);
                     return;
                 }
                 else if (matchzyTeam2.seriesScore == mapsToWinSeries)
                 {
-                    EndSeries(winnerName, restartDelay - 1, t1score, t2score);
+                    Log($"matchzyTeam2.seriesScore == mapsToWinSeries");
+                    isInMatch = false;
+        		    EndSeries(winnerName, restartDelay - 1, t1score, t2score);
                     return;
                 }
             }
             else if (remainingMaps <= 0)
             {
+                Log($"[HandleMatchEnd - DEBUG]:remainingMaps <= 0");
+                isInMatch = false;
                 EndSeries(winnerName, restartDelay - 1, t1score, t2score);
                 return;
             }
             if (matchzyTeam1.seriesScore > matchzyTeam2.seriesScore)
             {
-                Server.PrintToChatAll($"{chatPrefix} {ChatColors.Green}{matchzyTeam1.teamName}{ChatColors.Default} is winning the series {ChatColors.Green}{matchzyTeam1.seriesScore}-{matchzyTeam2.seriesScore}{ChatColors.Default}");
+		        Server.PrintToChatAll($"{chatPrefix} {ChatColors.Green}{matchzyTeam1.teamName}{ChatColors.Default} is winning the series {ChatColors.Green}{matchzyTeam1.seriesScore}-{matchzyTeam2.seriesScore}{ChatColors.Default}");
 
             }
             else if (matchzyTeam2.seriesScore > matchzyTeam1.seriesScore)
             {
-                Server.PrintToChatAll($"{chatPrefix} {ChatColors.Green}{matchzyTeam2.teamName}{ChatColors.Default} is winning the series {ChatColors.Green}{matchzyTeam2.seriesScore}-{matchzyTeam1.seriesScore}{ChatColors.Default}");
+		        Server.PrintToChatAll($"{chatPrefix} {ChatColors.Green}{matchzyTeam2.teamName}{ChatColors.Default} is winning the series {ChatColors.Green}{matchzyTeam2.seriesScore}-{matchzyTeam1.seriesScore}{ChatColors.Default}");
 
             }
             else
@@ -938,17 +957,21 @@ namespace MatchZy
             string nextMap = matchConfig.Maplist[matchConfig.CurrentMapNumber];
 
             if (isPaused)
-                UnpauseMatch();
-
+            {
+		        UnpauseMatch();
+	        }
             stopData["ct"] = false;
             stopData["t"] = false;
 
             KillPhaseTimers();
-
+            Log($"[AddTimer - DEBUG]: brefor changeMap");
             AddTimer(restartDelay - 4, () =>
             {
-                if (!isMatchSetup) return;
-                ChangeMap(nextMap, 3.0f);
+
+           //      if (!isMatchSetup){
+	    	     // return;
+           //      }
+	            ChangeMap(nextMap, 3.0f);
                 matchStarted = false;
                 readyAvailable = true;
                 isPaused = false;
@@ -1027,11 +1050,22 @@ namespace MatchZy
             return t1score + t2score;
         }
 
+        public void OpenOpposeMico()
+        {
+            Server.ExecuteCommand("sv_full_alltalk 1");
+        }
+
+        public void CloseOpposeMico()
+        {
+            Server.ExecuteCommand("sv_full_alltalk 0");
+        }
+        
         public void HandlePostRoundStartEvent(EventRoundStart @event)
         {
             if (isDryRun) RandomizeSpawns();
             if (!matchStarted) return;
             playerHasTakenDamage = false;
+            CloseOpposeMico();
             HandleCoaches();
             CreateMatchZyRoundDataBackup();
             InitPlayerDamageInfo();
@@ -1103,6 +1137,7 @@ namespace MatchZy
                     if (swapRequired && !isRoundRestoring)
                     {
                         SwapSidesInTeamData(false);
+                        OpenOpposeMico();
                     }
 
                     isRoundRestoring = false;
@@ -1745,7 +1780,7 @@ namespace MatchZy
 
         private void Log(string message)
         {
-            Console.WriteLine("[MatchZy] " + message);
+            Console.WriteLine("[ZHY] " + message);
         }
 
         private void AutoStart()
@@ -1855,6 +1890,7 @@ namespace MatchZy
 
         public async Task UploadFileAsync(string? filePath, string fileUploadURL, string headerKey, string headerValue, long matchId, int mapNumber, int roundNumber)
         {
+            Log($"[UploadFileAsync - DEBUG]:fileUploadURL:{fileUploadURL}");
             if (filePath == null || fileUploadURL == "")
             {
                 Log($"[UploadFileAsync] Not able to upload the file, either filePath or fileUploadURL is not set. filePath: {filePath} fileUploadURL: {fileUploadURL}");

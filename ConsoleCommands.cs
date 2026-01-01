@@ -65,6 +65,8 @@ namespace MatchZy
         {
             if (player == null) return;
             Log($"[!ready command] Sent by: {player.UserId} readyAvailable: {readyAvailable} matchStarted: {matchStarted}");
+            //TUDO:.r will reset .captain，in order to slove this may add:
+            //if(isCaptainPicking && readyAvailable && !matchStarted)
             if (readyAvailable && !matchStarted)
             {
                 if (player.UserId.HasValue)
